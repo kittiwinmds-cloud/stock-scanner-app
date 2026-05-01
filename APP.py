@@ -2,9 +2,22 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import ta
+import requests
 
 # =========================
-# CONFIG
+# 🔔 DISCORD WEBHOOK
+# =========================
+DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1499397129217769734/mvCVc6ArmwgHySBie_0seTHHFfQaW_I7v-R4HZG_vzlZRcgFu3dIGNKKVMos0Br5yinP"
+
+def send_discord(symbol, signal, price):
+    data = {
+        "content": f"📊 SIGNAL ALERT\n{symbol} → {signal} @ {price:.2f}"
+    }
+    requests.post(DISCORD_WEBHOOK, json=data)
+
+
+# =========================
+# 🔥 STOCK LIST
 # =========================
 BASE_SYMBOLS = [
 "NVDA","MSFT","AAPL","AMZN","GOOGL","META","PLTR",
@@ -21,22 +34,21 @@ BASE_SYMBOLS = [
 ]
 
 # =========================
-# UI
+# 🧠 STREAMLIT UI
 # =========================
-st.set_page_config(page_title="US Stock Scanner", layout="wide")
+st.set_page_config(page_title="Stock Scanner", layout="wide")
+st.title("📊 US Stock Scanner + Discord Alert")
 
-st.title("📊 US Stock Scanner (EMA + BB + Volume)")
-
-col1, col2 = st.columns(2)
-run = col1.button("🚀 Run Scan")
-limit = col2.slider("Max symbols", 5, len(BASE_SYMBOLS), 20)
+run = st.button("🚀 Run Scan")
 
 results = []
+last_signal = {}
+
 
 # =========================
 # SCAN FUNCTION
 # =========================
-def scan_symbol(symbol):
+def scan(symbol):
     df = yf.download(symbol, interval="1h", period="60d", progress=False)
 
     if df.empty:
@@ -47,7 +59,6 @@ def scan_symbol(symbol):
 
     df.dropna(inplace=True)
 
-    # Indicators
     df["ema_200"] = ta.trend.ema_indicator(df["Close"], window=200)
     df["bb_upper"] = ta.volatility.bollinger_hband(df["Close"])
     df["bb_lower"] = ta.volatility.bollinger_lband(df["Close"])
@@ -62,50 +73,69 @@ def scan_symbol(symbol):
 
     high_volume = last["Volume"] > last["vol_sma"] * 1.2
 
+    # =========================
+    # LONG SIGNAL
+    # =========================
     if last["Close"] > last["ema_200"] and last["Close"] > last["bb_upper"] and high_volume:
+
+        if last_signal.get(symbol) != "LONG":
+            send_discord(symbol, "LONG", last["Close"])
+            last_signal[symbol] = "LONG"
+
         return (symbol, "LONG")
 
+    # =========================
+    # SHORT SIGNAL
+    # =========================
     elif last["Close"] < last["ema_200"] and last["Close"] < last["bb_lower"] and high_volume:
+
+        if last_signal.get(symbol) != "SHORT":
+            send_discord(symbol, "SHORT", last["Close"])
+            last_signal[symbol] = "SHORT"
+
         return (symbol, "SHORT")
 
     return None
 
 
 # =========================
-# RUN
+# RUN BUTTON
 # =========================
 if run:
-    st.info("Scanning... please wait ⏳")
+    st.info("Scanning stocks...")
 
     progress = st.progress(0)
 
-    for i, symbol in enumerate(BASE_SYMBOLS[:limit]):
-        res = scan_symbol(symbol)
-        if res:
-            results.append(res)
+    for i, sym in enumerate(BASE_SYMBOLS):
 
-        progress.progress((i + 1) / limit)
+        try:
+            res = scan(sym)
+            if res:
+                results.append(res)
 
-    st.success("Scan completed!")
+        except Exception as e:
+            st.warning(f"{sym} error: {e}")
+
+        progress.progress((i + 1) / len(BASE_SYMBOLS))
+
+    st.success("Done!")
 
     # =========================
-    # RESULT
+    # RESULT TABLE
     # =========================
     if results:
-        df_result = pd.DataFrame(results, columns=["Symbol", "Signal"])
+        df = pd.DataFrame(results, columns=["Symbol", "Signal"])
 
         st.subheader("🔥 Signals Found")
+        st.dataframe(df, use_container_width=True)
 
-        st.dataframe(df_result, use_container_width=True)
-
-        # summary
-        st.metric("Total Signals", len(df_result))
+        st.metric("Total Signals", len(df))
 
         st.write("### LONG")
-        st.dataframe(df_result[df_result["Signal"] == "LONG"])
+        st.dataframe(df[df["Signal"] == "LONG"])
 
         st.write("### SHORT")
-        st.dataframe(df_result[df_result["Signal"] == "SHORT"])
+        st.dataframe(df[df["Signal"] == "SHORT"])
 
     else:
-        st.warning("No setup found ❌")
+        st.warning("No signals found")
