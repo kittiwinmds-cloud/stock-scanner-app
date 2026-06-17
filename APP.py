@@ -31,6 +31,33 @@ BASE_SYMBOLS = [
 "NFLX","DIS","CMCSA",
 "O","PLD","AMT",
 "SPY","QQQ","IWM","ARKK"
+# ===== TECH / AI =====
+"ASML","ARM","ADBE","CRM","ORCL","NOW",
+"DDOG","NET","PANW","SHOP","UBER","ABNB",
+
+# ===== FINANCE =====
+"BLK","SCHW","AXP","COF","SPGI","MCO",
+
+# ===== ENERGY =====
+"EOG","MPC","PSX","VLO","DVN",
+
+# ===== INDUSTRIAL =====
+"DE","ETN","PH","HON","NOC","GD",
+
+# ===== HEALTHCARE =====
+"UNH","ISRG","ABT","TMO","DHR","SYK",
+
+# ===== CONSUMER =====
+"HD","LOW","TJX","CMG",
+
+# ===== COMMUNICATION =====
+"TMUS","VZ","T","CHTR",
+
+# ===== MATERIALS =====
+"LIN","FCX","NEM","APD","ECL",
+
+# ===== ETFs =====
+"DIA","SMH","SOXX","XLF","XLE","XLV"
 ]
 
 # =========================
