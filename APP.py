@@ -30,7 +30,7 @@ BASE_SYMBOLS = [
 "JNJ","PFE","LLY","ABBV","MRK",
 "NFLX","DIS","CMCSA",
 "O","PLD","AMT",
-"SPY","QQQ","IWM","ARKK"
+"SPY","QQQ","IWM","ARKK",
 "ASML","ARM","ADBE","CRM","ORCL","NOW",
 "DDOG","NET","PANW","SHOP","UBER","ABNB",
 "BLK","SCHW","AXP","COF","SPGI","MCO",
